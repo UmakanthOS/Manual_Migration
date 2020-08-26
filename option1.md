@@ -1,23 +1,22 @@
 
 ## Moodle Manual  Migration
-This document explains how to migrate Moodle from onpremise servers to Azure cloud.
+This document explains how to migrate Moodle from an on-premises deployment to Azure.
 
-### Option 1: Migrating Moodle with Azure ARM Templates 
--   Migration of Moodle with   Azure ARM Template  creates the infrastructure in Azure and migrate Moodle on it.
--   The Azure infrastructure is the basic skeleton of the resources which will host the Moodle application.
+### Option 1: Migrating Moodle with an ARM templates 
+-   Migration of Moodle with an ARM template:  creates the infrastructure in Azure.
+-  Once the infrastructure is created, the Moodle software stack and associated dependencies are migrated.
 
 ## Prerequisites
 
--   If the predefined templates does not match with onpremise configuration then upgrade onpremise Moodle, Php, nginx or apache to more recent versions.
--   Must have access to the onpremise servers to take backup of Moodle and database/configurations.
--   Must have a Azure subscription and the Azure Blob storage created before migration.
--   Azure cli must be installed.
--   Must install AZCOPY.
--   This migration activity supports with the following Softwares.
+-   If the versions of the software stack deployed on-premises are lagging with respect to the versions supported in this guide, the expectation is that the on-premises
+    versions will be updated/patched to the versions listed in this guide.
+-   Must have access to the onpremise servers to take backup of Moodle deployment and configurations (including DB configurations).
+-   Need an Azure subscription and the Azure Blob storage created before migration.
+-   Have [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) and [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) handy.
+-   This migration guide supports the following software versions:
     -   Ubuntu 16.04 LTS
-    -   Nginx web server 1.10.3
-    -   Apache 2 2.4
-    -   MySQL PaaS 5.6, 5.7 or 8.0 database server
+    -   Nginx 1.10.3 or Apache 2.4
+    -   MySQL 5.6, 5.7 or 8.0 database server (This guide uses [Azure Database for MYSQL](https://azure.microsoft.com/en-us/services/mysql/))
     -   PHP 7.2, 7.3, or 7.4
     -   Moodle 3.8 & 3.9
 
