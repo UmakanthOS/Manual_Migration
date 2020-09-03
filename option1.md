@@ -443,4 +443,4 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             ```
     -   **Mapping IP:**
         -   Map the load balancer IP with the DNS name.
-            
+    - Hit the load balancer DNS name to get the migrated moodle web page.   
