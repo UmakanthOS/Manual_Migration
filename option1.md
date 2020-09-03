@@ -129,7 +129,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             
                 ```
                     az storage container create --account-name <storageAccontName> --name <containerName> --sas-token <SAS_token>
-                    sudo azcopy copy '/path/to/location/moodle.tar' 'https://<storageAccountName>.blob.core.windows.net/<containerName>/<dns>/<SAStoken>
+                    sudo azcopy copy '/path/to/location/moodle.tar.gz' 'https://<storageAccountName>.blob.core.windows.net/<containerName>/<dns>/<SAStoken>
                 ```
             -   Now, you should have a copy of your archive inside the Azure blob storage account
 
@@ -159,7 +159,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
     - Ubuntu version: 16.04-LTS  
  
  <details>
-  <summary>The infrastructure will create the following resources by using the predefined ARM template</summary>
+  <summary>When the ARM template is used, the following resources are created within Azure (click to expand!)</summary>
   
 
 - **Network Template:** Network Template will create virtual network,Network Security Group, Network Interface, subnet, Public IP, Load Balancer/App gateway and Redis cache etc. 
@@ -213,8 +213,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
         
 - **Virtual Machine Template:** This template will create a  Virtual Machine
     - Controller VM: 
-        - Ubuntu OS defaulted to 16.04 
-        - A virtual machine is a computer file, typically called an image, which behaves like an actual compute [Click here](https://azure.microsoft.com/en-in/overview/what-is-a-virtual-machine/) 
+        - The OS used at this time is Uubntu 16.04
     - VM extension: 
         - Extension can be small applications that provide post-deployment configuration and automation tasks on Azure VMs.[Click here](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/overview) 
         - VM extension will executes a shell script file which installs Moodle on the Virtual Machine and captures the log files. 
@@ -222,22 +221,22 @@ This document explains how to migrate Moodle from an on-premises deployment to A
         - User can view the log files as a root user. 
 
 - **Scale Set Template**: 
-    -   This template will create a  Virtual Machine Scale Set (VMSS) with the VM instance. [Click here](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview) 
+    -   This template will create a  [Virtual Machine Scale Set.](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview) 
     - A virtual machine scale set allows you to deploy and manage a set of auto-scaling virtual machines. You can scale the number of VMs in the scale set manually or define rules to auto scale based on resource usage like CPU, memory demand, or network traffic.
-    - Autoscaling of VM Instances depends on the CPU utilization. [Click here](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-overview)  
+    - Autoscaling of VM Instances depends on [CPU utilization.](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-overview)  
     - While scaling up an instance a VM is deployed and a shell script is executed to install the Moodle prerequisites and setting up cron jobs. 
     - VM instances have Private IP. 
-    - For connecting to VM’s on Scale Set with private IP, follow the steps written in the [document](https://github.com/asift91/Manual_Migration/blob/master/vpngateway.md). 
+    - For connecting to VMs on Scale Set with private IP, follow the steps written in the [document](https://github.com/asift91/Manual_Migration/blob/master/vpngateway.md). 
     
 </details>
--   ### Manual Moodle migration follow the below steps 
 
+### Manual migration of Moodle after Azure infrastructure deployment 
     -   After completion of deployment go to the resource group.  
     -   Update the Moodle folders and configuration in both the controller virtual machine and virtual machine scale set instance.
     -   **Virtual Machine**
     - Login into this controller machine using any of the free open-source terminal emulator or serial console tools 
-        - Copy the public IP of controller VM and paste as host name 
-        - Expand SSH in navigation panel and click on Auth and browse the same SSH key file given while deployment. 
+        - Copy the public IP of controller VM to use as the hostname
+        - Expand SSH in navigation panel and click on Auth and browse the same SSH key file given while deploying the Azure infrastructure using the ARM template
         - Click on Open and it will prompt to give the username. Give it as azureadmin as it is hard coded in template
         ![puttyloginpage](images/puttyloginpage.PNG)
         ![puttykey](images/puttykeybrowse.PNG)
@@ -251,10 +250,10 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             ```
     - Extract the compressed content to a folder.
         ```
-            tar -zxvf yourfile.tar.gz
+            tar -zxvf moodle.tar.gz
         ```
     -   A backup folder is extracted as storage/ at /home/azureadmin/.
-    -   Storage folder contains Moodle, Moodledata and configuration folders along with database backup file. These will be copied to desired locations.
+    -   This storage folder contains moodle, moodledata and configuration folders along with database backup file. These will be copied to desired locations.
     - Create a backup folder
         ```
             cd /home/azureadmin/
@@ -400,7 +399,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
 
 ## Post Migration
 
--   Post migration of Moodle application user need to update the certs and log paths as follows
+-   Post migration tasks are around final application configuration that include setup of logging destinations, SSL certificates and scheduled tasks / cron jobs.
 
 -   **Virtual Machine:**
     
