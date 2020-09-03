@@ -10,7 +10,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
 
 -   If the versions of the software stack deployed on-premises are lagging with respect to the versions supported in this guide, the expectation is that the on-premises
     versions will be updated/patched to the versions listed in this guide.
--   Must have access to the onpremise servers to take backup of Moodle deployment and configurations (including DB configurations).
+-   Must have access to the on-premise infrastructure to take backup of Moodle deployment and configurations (including DB configurations).
 -   Need an Azure subscription and the Azure Blob storage created before migration.
 -   Have [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) and [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) handy.
 -   This migration guide supports the following software versions:
@@ -112,7 +112,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
                     mysql -u dbUserName -p
                     # After the above command user will prompted for database password
                     mysqldump -h dbServerName -u dbUserId -pdbPassword dbName > /path/to/location/database.sql
-                    # Replace dbServerName, dbUserId, dbPassword and bdName with onpremise database details
+                    # Replace dbServerName, dbUserId, dbPassword and bdName with on-premises database details
                 
                 ```
         -   Create an archive (tar.gz format) of the backup folder
@@ -168,7 +168,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
    
     - **Virtual network:** An Azure Virtual Network is a representation of your own network in the cloud. It is a logical isolation of the Azure cloud dedicated to your subscription. When you create a VNet, your services and VMs within your VNet can communicate directly and securely with each other in the cloud. More information on Virtual Network [click here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview).
     - **Network Security Group:** A network security group (NSG) is a networking filter (firewall) containing a list of security rules allowing or denying network traffic to resources connected to Azure VNets. For more information [click here](https://docs.microsoft.com/en-us/azure/virtual-network/security-overview).
-    -   **Network Interface:** A network interface enables an Azure Virtual Machine to communicate with internet, Azure and onpremise resources.[click here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-netwAork-interface)
+    -   **Network Interface:** A network interface enables an Azure Virtual Machine to communicate with internet, Azure and on-premises resources.[click here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-netwAork-interface)
     - **Subnet:** A subnet or subnetwork is a smaller network inside a large network. By default, an IP in a subnet can communicate with any other IP inside the VNET. More information on Subnet [click here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-subnet). 
     - **Public IP:** Public IP addresses are used to communicate Azure resources to the Internet. The address is dedicated to the Azure resource. More information on Public IP [click here](https://docs.microsoft.com/en-us/azure/virtual-network/public-ip-addresses#:~:text=Public%20IP%20addresses%20enable%20Azure,IP%20assigned%20can%20communicate%20outbound). 
     - **Load Balancer:** It is an efficient distribution of network or application traffic across multiple servers in a server farm. Ensures high availability and reliability by sending requests only to servers that are online. More information on Load balancer  [click here](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-load-balancer#:~:text=An%20Azure%20load%20balancer%20is,traffic%20to%20an%20operational%20VM). 
@@ -187,7 +187,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
     - Below are types of storage account types ARM template support. 
         - NFS: A Network File System (NFS) allows remote hosts to mount file systems over a network and interact with those file systems as though they are mounted locally. This enables system administrators to consolidate resources onto centralized servers on the network. More information on NFS [click here](https://docs.microsoft.com/en-us/windows-server/storage/nfs/nfs-overview). 
         - GluserFS: It is an open source distributed file system that can scale out in building-block fashion to store multiple petabytes of data. More information on Gluster FS [click here](https://docs.microsoft.com/en-us/azure/virtual-machines/workloads/sap/high-availability-guide-rhel-glusterfs). 
-        - Azure Files: is the only public cloud file storage that delivers secure, Server Message Block (SMB) based, fully managed cloud file shares that can also be cached onpremiseises for performance and compatibility. More information on Azure Files [click here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction). 
+        - Azure Files: is the only public cloud file storage that delivers secure, Server Message Block (SMB) based, fully managed cloud file shares that can also be cached on-premises for performance and compatibility. More information on Azure Files [click here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction). 
             - NFS and glusterFS:  
                 - Replication is standard Locally-redundant storage (LRS)  
                 - Type is Storage (general purpose v1) 
@@ -241,7 +241,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
         ![puttyloginpage](images/puttyloginpage.PNG)
         ![puttykey](images/puttykeybrowse.PNG)
     - After the login, run the following set of commands to migrate 
-        - Download the onpremise compressed data from Azure Blob storage to VM such as Moodle, Moodledata, configuration folders with database backup file to /home/azureadmin location. 
+        - Download the on-premise backup from Azure Blob storage to VM such as moodle, moodledata, configuration folders with database backup file to /home/azureadmin location. 
         -   Download the compressed backup file to Controller VM at /home/azureadmin/ location.
             ```
                 sudo -s
@@ -274,13 +274,13 @@ This document explains how to migrate Moodle from an on-premises deployment to A
                 mv /moodle/moodledata /home/azureadmin/backup/moodle/moodledata
                 cp /home/azureadmin/moodledata /moodle/moodledata
             ``` 
-    - Importing the .sql file     
-        -   Import the onpremise database to Azure Database for MySQL.
-        - Create a database to import onpremise database
+    - Importing the Moodle database to the Azure Moodle DB    
+        -   Import the on-premises database to Azure Database for MySQL.
+        - Create a database to import on-premises database
             ```
                 mysql -h $server_name -u $ server_admin_login_name -p$admin_password -e "CREATE DATABASE ${moodledbname} CHARACTER SET utf8;"
             ```
-        - Give the permissions to database
+        - Assign right permissions to database
             ```
                 mysql -h $ server_name -u $ server_admin_login_name -p${admin_password } -e "GRANT ALL ON ${moodledbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';"
             ``` 
@@ -288,7 +288,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             ```
                 mysql -h db_server_name -u db_login_name -pdb_pass dbname >/path/to/.sql file
             ```
-    - Configure folder premissions
+    - Configure folder permissions
         - Set 755 and www-data owner:group permissions to Moodle folder 
             ```
                 sudo chmod 755 /moodle
@@ -307,7 +307,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
                 vi config.php
                 # update the database details and save the file.
             ```
-    - Configuring Php & WebServer
+    - Configuring PHP and web server
         - Update the nginx conf file
             ```
                 sudo mv /etc/nginx/sites-enabled/<dns>.conf  /home/azureadmin/backup/<dns>.conf 
@@ -323,11 +323,11 @@ This document explains how to migrate Moodle from an on-premises deployment to A
         -   Install Missing PHP extensions
                 - ARM template install the following PHP extensions.
                     - fpm, cli, curl, zip, pear, mbstring, dev, mcrypt, soap, json, redis, bcmath, gd, mysql, xmlrpc, intl, xml and bz2
-            Note: If onpremise has any additional php extensions those will be installed by the user.
+            Note: If on-premise has any additional PHP extensions those will be installed by the user.
             ```
                 sudo apt-get install -y php-<extensionName>
             ```
-        - Restart the web servers
+        - Restart the web server
             ```
                 sudo systemctl restart nginx 
                 sudo systemctl restart php(phpVersion)-fpm  
@@ -335,7 +335,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             ``` 
     -   **Virtual Machine Scaleset**
         -   Login to Scale Set VM instance and execute the following sequence of steps
-        - Download the onpremise compressed data from Azure Blob storage to VM such as Moodle, Moodledata, configuration folders with database backup file to /home/azureadmin location. 
+        - Download the on-premise compressed data from Azure Blob storage to VM such as moodle, moodledata, configuration folders with database backup file to /home/azureadmin location. 
         -   Download the compressed backup file to Controller VM at /home/azureadmin/ location.
             ```
                 sudo -s
@@ -344,10 +344,10 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             ```
         - Extract the compressed content to a folder.
             ```
-                tar -zxvf yourfile.tar.gz
+                tar -zxvf moodle.tar.gz
             ```
     -   A backup folder is extracted as storage/ at /home/azureadmin/.
-        -   Storage folder contains Moodle, Moodledata and configuration folders along with database backup file. These will be copied to desired locations.
+        -   This Storage folder contains moodle, moodledata and configuration folders along with database backup file. These will be copied to desired locations.
         - Create a backup folder
             ```
                 cd /home/azureadmin/
@@ -355,7 +355,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
                 mkdir -p backup/moodle
             ```
         
-        - **Configuring Php & WebServer**
+        - **Configuring PHP & web server**
             - Update the nginx conf file
                 ```
                     sudo mv /etc/nginx/sites-enabled/<dns>.conf  /home/azureadmin/backup/<dns>.conf 
@@ -371,27 +371,27 @@ This document explains how to migrate Moodle from an on-premises deployment to A
             -   Install Missing PHP extensions
                     - ARM template install the following PHP extensions.
                         - fpm, cli, curl, zip, pear, mbstring, dev, mcrypt, soap, json, redis, bcmath, gd, mysql, xmlrpc, intl, xml and bz2
-                Note: If onpremise has any additional php extensions those will be installed by the user.
+                Note: If on-premises has any additional PHP extensions those will be installed by the user.
                 ```
                     sudo apt-get install -y php-<extensionName>
                 ```
             
         -   **Log Paths**
-            -   onpremise might be having different log path location and those paths need to be updated with Azure log paths.
+            -   The logging destination will need to be standardized...
             -   Log path are defaulted to /var/log/nginx.
                 -   access.log and error.log are created
         -   **Restart servers**
         
-            -   Update the time stap to update the local copy in VMSS instance.
+            -   Update the time-stamp to update the local copy in VMSS instance.
                 ```
                     /usr/local/bin/update_last_modified_time.azlamp.sh
                 ```
-            -   Restart the nginx and php-fpm servers
+            -   Restart nginx and php-fpm
                 ```
                     sudo systemctl restart nginx
                     sudo systemctl restart php<phpVersion>-fpm
                 ```
-            -   If apache is installed as a webserver then restart apache server
+            -   If apache is installed as a webserver then restart apache
                 ```
                     sudo systemctl restart apache
                 ```
@@ -405,7 +405,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
     
     -   **Log Paths**
         
-        -   onpremise might be having different log path location and those paths need to be updated with Azure log paths.
+        -   on-premise might be having different log path location and those paths need to be updated with Azure log paths.
     -   **Certs:**
         -   _SSL Certs_: The certificates for your Moodle application reside in /moodle/certs/
         -   Copy over the .crt and .key files over to /moodle/certs/. The file names should be changed to nginx.crt and nginx.key in order to be recognized by the configured nginx servers. Depending on your local environment, you may choose to use the utility scp or a tool like WinSCP to copy these files over to the cluster controller virtual machine.
@@ -424,7 +424,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
                 chmod 400 /moodle/certs/nginx.*
             ```
     -   **Update Time Stamp:**
-        -   A cron job is running in the VMSS which will check the updates in timestamp for every minute. If there is an update in timestamp then local copy of VMSS is updated in web root directory.
+        -   A cron job that runs in the VMSS instance(s) which will check the updates in timestamp for every minute. If there is an update in timestamp then local copy of VMSS is updated in web root directory.
         -   In Virtual Machine scaleset a local copy of Moodle site data (/moodle/html/moodle) is copied to its root directory (/var/www/html/).
         -   Update the time stamp to update the local copy in VMSS instance.
             ```
