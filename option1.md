@@ -230,7 +230,7 @@ This document explains how to migrate Moodle from an on-premises deployment to A
     
 </details>
 
-### Manual migration of Moodle after Azure infrastructure deployment 
+-   ### Manual migration of Moodle after Azure infrastructure deployment 
     -   After completion of deployment go to the resource group.  
     -   Update the Moodle folders and configuration in both the controller virtual machine and virtual machine scale set instance.
     -   **Virtual Machine**
