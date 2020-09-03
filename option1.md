@@ -1,6 +1,6 @@
 
 ## Moodle Manual  Migration
-This document explains how to migrate Moodle from an on-premises deployment to Azure.
+This document explains how to migrate Moodle from an on-premises deployment to Azure. For each of the steps, you have two approaches provided: one that lets you use Azure Portal and one that lets you accomplish the same tasks on a command line using Azure CLI.
 
 ### Option 1: Migrating Moodle with an ARM templates 
 -   Migration of Moodle with an ARM template:  creates the infrastructure in Azure.
@@ -22,44 +22,44 @@ This document explains how to migrate Moodle from an on-premises deployment to A
 
 ## Migration Approach
 
--   Migration of Moodle application has 3 phases
-    -   Pre Migration
-    -   Migration
-    -   Post Migration
+-   Migration of Moodle application to Azure is broken down in the following three stages:
+    -   Pre-migration tasks
+    -   Actual migration of the application
+    -   Post-migration tasks
 
-Following operations are performed in the process of Migration.
 
 -   **Pre Migration**
     
-    -   Data Export from onpremise to Azure Cloud
-        -   Install Azure CLI
-        -   Create Subscription
-        -   Create Resource Group
-        -   Create Storage Account
-        -   Backup of onpremise data
-        -   Copy Archive file to Blob storage
-
+    -   Data Export from on-premises to Azure involves the following tasks:
+        -   Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+        -   Have an [Azure subscription](https://azure.microsoft.com/en-us/) handy
+        -   Create a Resource Group inside Azure
+        -   Create a Storage Account inside Azure
+        -   Backup all relevant data from on-premises infrastructure
+        -   Ensure the on-premises database instance has mysql-client installed
+        -   Copy backup archive to Blob storage on Azure
 
 -   **Migration**
     
-    -   Migration of Moodle
-        - Migrating Moodle with Azure ARM Templates.
-        - Manual Moodle migration follow the below steps 
-        - Copy the onpremise data to the Controller Virtual Machine.
-        - onpremise Data and Configuting setup.
+    -   Actual migration tasks that involve the application and all data:
+        - Deploy infrastructure on Azure using [Moodle ARM template](https://github.com/Azure/Moodle) 
+        - Copy over the backup archive (Moodle data) to the Moodle controller instance from the ARM deployment 
+        - Setup Moodle controller instance and worker nodes
+        - Data migration tasks
        
 -   **Post Migration**
     
-    -   Update log paths
-    -   Update Cron Job
-    -   Configuring certs
-    -   Restart servers
+    -   Post migration tasks that include application configuration and certificate installs:
+        -   Update general configuration (e.g. log file destinations)
+        -   Update any cron jobs / scheduled tasks
+        -   Configuring certificates
+        -   Restarting servers
 
 ## Pre Migration
 
--   **Data Export from onpremise to Azure Cloud:**
+-   **Data Export from on-premises to Azure Cloud:**
     -   **Install Azure CLI**
-        -   Install Azure CLI on onpremiseise to  create resource group and to install azure resources.
+        -   Install Azure CLI on a host inside the on-premises infrastructure for all Azure related tasks
             ```
             curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
             ```
@@ -67,45 +67,44 @@ Following operations are performed in the process of Migration.
             ```
                 az login
             ```
-        -   If the CLI can open your default browser, it will do so and load an Azure sign-in page.
-        -   Otherwise, open a browser page at  [https://aka.ms/devicelogin](https://aka.ms/devicelogin)  and enter the authorization code displayed in your terminal.
+        -   Azure CLI will quite likely launch an instance or a tab inside your default web-browser and prompt you to login to Azure using your Microsoft Account.
+        -   If the above browser launch does not happen, open a browser page at  [https://aka.ms/devicelogin](https://aka.ms/devicelogin)  and enter the authorization code displayed in your terminal.
         -   Sign in with your account credentials in the browser.
         -   Sign in with credentials on the command line
             ```
                 az login -u <username> -p <password>
             ```
     -   **Create Subscription:**
-        -   User must have Azure subscription.
-        -   Select existing subscription or user can add a subscription  [Portal](https://ms.portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade), can select  [Pay-As-You-Go](https://azure.microsoft.com/en-in/offers/ms-azr-0003p/).
+        -   If you do not have a subscription already present, you can choose to [create one within the Azure Portal]((https://ms.portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) or opt for a [Pay-As-You-Go](https://azure.microsoft.com/en-us/offers/ms-azr-0003p/).
+
 
     -   **Create Resource Group:**
-        -   After creating the subscription, create a  [Portal-Link](https://ms.portal.azure.com/#create/Microsoft.ResourceGroup).
+        -   Once you have a subscription handy, you will need to [create a Resource Group](https://ms.portal.azure.com/#create/Microsoft.ResourceGroup).
             ```
-                # cmd to create a RG
+                # Alternatively you can use the Azure CLI command to create a resource group
                 az deployment group create --resource-group <resource-group-name> --template-file <path-to-template>
             
             ```
    
     -   **Create Storage Account:**
 
-        -   Create Azure Storage Account in the same Resource Group
-        -   Create a  [storage account](https://ms.portal.azure.com/#create/Microsoft.StorageAccount)  with AutoKind value as "BlobStorage"
+        -   The next step would be to [create a Storage Account]((https://ms.portal.azure.com/#create/Microsoft.StorageAccount) in the Resource Group you've just created
+        -   Create a  [storage account](https://ms.portal.azure.com/#create/Microsoft.StorageAccount) and set the Account 
             ```
                 az storage account create -n storageAccountName -g resourceGroupName --sku Standard_LRS --kind StorageV2 -l eastus2euap -t Account
             ```
-        -   The storage account name must be in the combination of lowercase and numericals, click on create button as shown above.
-        -   Storage Account is created, can be used to store the onpremise data.
+        -   Once the storage account is created, this can be used as the interim destination for the on-premises backup
     
-    -   **Backup of onpremise data:**
-        -   Take backup of onpremise data such as moodle, moodledata, configurations and database backup file to a folder. For pictorial representation [click here](https://github.com/asift91/Manual_Migration/blob/master/images/folderstructure.png).
-        -   Moodle and Moodledata
-            -   Moodle folder consists of site HTML content and Moodledata contains Moodle site data
-        -   Configurations
-            -   Copy the php configurations files such as php-fpm.conf, php.ini, pool.d and conf.d folder to phpconfig folder under the configuration folder.
-            -   copy the ngnix configuration such as nginx.conf, sites-enabled/dns.conf to the nginxconfig folder under the configuration folder.
-            -   copy the apache configuration similarly if the webserver is Apache.
+    -   **Backup of on-premises data:**
+        -   Take backup of on-premises data such as moodle, moodledata, configurations and database backup file to a a single directory. The following illustration should give you a good idea: https://github.com/asift91/Manual_Migration/blob/master/images/folderstructure.png
+        -   moodle and moodledata
+            -  The moodle directory consists of site HTML content and moodledata contains Moodle site data
+        -   configuration
+            -   Copy the php configuration files such as php-fpm.conf, php.ini, pool.d and conf.d folder to phpconfig folder under the configuration directory.
+            -   Copy the ngnix configuration such as nginx.conf, sites-enabled/dns.conf to the nginxconfig directory under the configuration directory.
+            -   If the web-server used is Apache instead, copy all the relevant configuration for Apache to the configuration directory.
         -   create a backup of database
-            -   Before taking backup of database onpremise should have mysql-client to be installed.
+            -   If you do not have mysql-client installed on the database instance, now would be a good time to do that.
                 
                 ```
                     sudo -s
@@ -116,30 +115,31 @@ Following operations are performed in the process of Migration.
                     # Replace dbServerName, dbUserId, dbPassword and bdName with onpremise database details
                 
                 ```
-        -   Create an archive tar.gz file of backup folder
+        -   Create an archive (tar.gz format) of the backup folder
             ```
                 tar -zcvf moodle.tar.gz <source/folder/name>
             ```
             
     -   **Copy Archive file to Blob storage**
-        -   Copy the onpremise archive file to blob storage by following command.
-            -   To use AzCopy user should generate SAS Token.
+        -   Copy the on-premises archive file to blob storage using AzCopy
+            -   To use AzCopy user should a generate SAS Token first.
             -   Go to the created Storage Account Resource and navigate to Shared access signature in the left panel.
             -   Select the Container checkbox and set the start, expiry date of the SAS token. Click on "Generate SAS and Connection String".
             -   copy the SAS token for further use.
+            
                 ```
                     az storage container create --account-name <storageAccontName> --name <containerName> --sas-token <SAS_token>
                     sudo azcopy copy '/path/to/location/moodle.tar' 'https://<storageAccountName>.blob.core.windows.net/<containerName>/<dns>/<SAStoken>
                 ```
-            -   With the above steps, onpremise compressed data is exported to Azure blob storage.
+            -   Now, you should have a copy of your archive inside the Azure blob storage account
 
 ## Migration
 
-### Migrating Moodle with Azure ARM Templates 
-- Moodle installation on Azure can be done two ways.
-    - Moodle installation on Azure with 4 predefined template. 
-    - Fully Configurable deployment provides various options to select with when the requirement does not match with the predefined ARM templates. [Portal-Link](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FMoodle%2Fmaster%2Fazuredeploy.json)
-- The 4 predefined templates options such as Minimal, Short-to-Mid, Large, Maximal are available on [GitHub repository](https://github.com/Azure/moodle).
+### Deploying Azure infrastructure using ARM templates
+- When using an ARM template to deploy infrastructure on Azure, you have a couple of available options
+    - A pre-defined deployment size using one of the four pre-defined Moodle sizes. 
+    - A fully configurable deployment that provides gives more flexibility and choice[around deployments](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FMoodle%2Fmaster%2Fazuredeploy.json)
+- The four predefined options are Minimal, Short-to-Mid, Large and Maximal. These are available on [GitHub repository](https://github.com/Azure/moodle).
     - [Minimal](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FMoodle%2Fmaster%2Fazuredeploy-minimal.json): This deployment will use NFS, MySQL, and smaller auto scale web frontend VM sku (1 core) that will give faster deployment time (less than 30 minutes) and requires only 2 VM cores currently that will fit even in a free trial Azure subscription.  
     - [Small to Mid](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FMoodle%2Fmaster%2Fazuredeploy-small2mid-noha.json): Supporting up to 1000 concurrent users. This deployment will use NFS (no high availability) and MySQL (8 vCores), without other options like elastic search or Redis cache.  
     - [Large (high availability)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FMoodle%2Fmaster%2Fazuredeploy-large-ha.json): Supporting more than 2000 concurrent users. This deployment will use Azure Files, MySQL (16 vCores) and Redis cache, without other options like elastic search.  
@@ -157,7 +157,11 @@ Following operations are performed in the process of Migration.
     - Database server type: MySQL  
     - MySQL version: 5.6, 5.7 and 8.0 
     - Ubuntu version: 16.04-LTS  
-- The infrastructure will create the following resources by using the predefined ARM template: 
+ 
+ <details>
+  <summary>The infrastructure will create the following resources by using the predefined ARM template</summary>
+  
+
 - **Network Template:** Network Template will create virtual network,Network Security Group, Network Interface, subnet, Public IP, Load Balancer/App gateway and Redis cache etc. 
      - Creates a virtual network with string as name , apiVersion, Location and DNS server name.
      - The AddressSpace that contains an array of IP address ranges that can be used by subnets
@@ -225,7 +229,7 @@ Following operations are performed in the process of Migration.
     - VM instances have Private IP. 
     - For connecting to VM’s on Scale Set with private IP, follow the steps written in the [document](https://github.com/asift91/Manual_Migration/blob/master/vpngateway.md). 
     
-
+</details>
 -   ### Manual Moodle migration follow the below steps 
 
     -   After completion of deployment go to the resource group.  
